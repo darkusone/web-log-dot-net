@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace web_log_dot_net
 {
-    public class Class1
+    public class WebLog
     {
     }
 }
