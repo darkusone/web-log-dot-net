@@ -7,13 +7,14 @@ using System.Net;
 using System.IO;
 using System.Threading;
 using System.Diagnostics;
+using System.Windows.Forms;
 
 namespace web_log_dot_net
 {
     public class WebLog
     {
 
-        public enum LogLeve
+        public enum LogLevel
         {
             Info,
             Warning,
@@ -21,42 +22,153 @@ namespace web_log_dot_net
             Critical
         }
 
-        private string htmlTempFolder = Environment.CurrentDirectory + "tmp";
 
-        private string htmlRefreshRate = "3";
-        private string htmlTitle = "WebLog";
+        private WebServer ws;
+        //paths
+        private static string htmlTempFolder = Environment.CurrentDirectory + "\\tmp";
+        private static string htmlFilePath = htmlTempFolder + "\\index.html";
+        private static string cssFilePath = htmlTempFolder + "\\main.css";
+
+        //paths
+
+
+        private int webLogPort;
+        private string htmlRefreshRate;
+        private string htmlTitle;
         private string htmlHead = @"<html>
                                     <head>
-                                        <meta http-equiv='refresh' content='3'/>
+                                        <meta http-equiv='refresh' content='%refresh%'/>
                                         <meta charset='UTF-8'/>
                                         <link rel='stylesheet' href='main.css'>
                                         <link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css'>
-                                        <script src='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js'>
+                                        <script src='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js'></script>
                                     </head>";
         private string htmlBody = @"<body>
                                         <div class='container-fluid'>
                                             <div class='row title'>
-                                                <div class='col-md-6 col-sm-6 col-xs-12'><h1></h1></div>
+                                                <div class='col-md-12 col-sm-12 col-xs-12'><h1>%title%</h1></div>
                                             </div>
                                         <!-- weblogstart -->
                                         
                                         <!-- weblogend -->
                                         </div>
                                     </body></html>";
-        private string htmlLogLineTemplate = "<div class='row'><!-- linecontentstart --><!-- linecontentend --></div>";
+        private string htmlLogLineTemplate = "<div class='row %errorLevel%'><div class='errorName'>%errorLevel%:</div> " + DateTime.Now.ToString() + " - %logMessage%</div>";
+
+
+        private string basicCSS = @"
+                                    * {
+                                        padding: 0;
+                                        margin: 0;
+                                    }
+                                    h1 {
+                                        background-color: #ccc;
+                                        border: 1px solid #999;
+                                        text-align: center;
+                                        text-transform: uppercase;
+                                        text-decoration: underline;
+                                    }
+                                    .row {
+                                        padding: 5px 10px;
+                                        font-size: 14px;
+                                        border: 1px solid #999;
+                                        font-weight: bold;
+                                    }
+                                    .info {
+                                        background-color: #7986CB;
+                                    }
+                                    .warning {
+                                        background-color: #FFD54F;
+                                    }
+                                    .error {
+                                        background-color: #E57373;
+                                    }
+                                    .critical {
+                                        background-color: #B71C1C;
+                                    }
+                                    .errorName {
+                                        min-width: 90px;
+                                        max-width: 90px;
+                                        width: 90px;
+                                        display: inline-flex;
+                                    }
+                                    ";
 
 
 
-
-
-
-        public WebLog()
+        public WebLog(string webLogTitle = "WebLog", int refreshRate = 3, int port = 8844)
         {
+            webLogPort = port;
+            htmlTitle = webLogTitle;
+            htmlRefreshRate = refreshRate.ToString();
             
+            init();
+            ws = new WebServer(htmlTempFolder, webLogPort);
+
+            AppDomain.CurrentDomain.ProcessExit += new EventHandler(cleanUp);
+        }
+
+        
+
+        /// <summary>
+        /// Create required folder, html and basic CSS file file.
+        /// </summary>
+        private void init()
+        {
+            Directory.CreateDirectory(htmlTempFolder);
+            string finalHTML = htmlHead.Replace("%refresh%", htmlRefreshRate) + htmlBody.Replace("%title%", htmlTitle);
+            using(StreamWriter writer = new StreamWriter(htmlFilePath))
+            {
+                writer.Write(finalHTML);
+            }
+            using (StreamWriter writer = new StreamWriter(cssFilePath))
+            {
+                writer.Write(basicCSS);
+            }
+        }
+
+
+        /// <summary>
+        /// Delete all created files while working before application exit
+        /// </summary>
+        private void cleanUp(object sender, EventArgs e)
+        {
+            ws.Stop();
+            Directory.Delete(htmlTempFolder, true);
+        }
+
+        public void write(string message, LogLevel level = LogLevel.Info)
+        {
+            string finalLine = htmlLogLineTemplate.Replace("%errorLevel%", level.ToString()).Replace("%logMessage%", message);
+            string currentFileContent, bodyFirstPart, bodyLastPart;
+
+            using(StreamReader reader = new StreamReader(htmlFilePath))
+            {
+                currentFileContent = reader.ReadToEnd();
+            }
+
+            bodyFirstPart = currentFileContent.Substring(0, currentFileContent.IndexOf("<!-- weblogend -->"));
+            bodyLastPart = currentFileContent.Substring(currentFileContent.IndexOf("<!-- weblogend -->"), currentFileContent.Length - bodyFirstPart.Length);
+
+            using(StreamWriter writer = new StreamWriter(htmlFilePath))
+            {
+                writer.Write(bodyFirstPart + finalLine + bodyLastPart);
+            }
 
         }
 
+
+       
+
     }
+
+
+
+
+
+
+
+
 
     /// <summary>
     /// Mini Webserver Class to serve the webLog
@@ -172,9 +284,16 @@ namespace web_log_dot_net
 
         private void Listen()
         {
-            _listener = new HttpListener();
-            _listener.Prefixes.Add("http://*:" + _port.ToString() + "/");
-            _listener.Start();
+            try
+            {
+                _listener = new HttpListener();
+                _listener.Prefixes.Add("http://*:" + _port.ToString() + "/");
+                _listener.Start();
+            }catch(Exception e)
+            {
+                MessageBox.Show("The selected port is currently in use, please select another.", "Port in use", MessageBoxButtons.OK);
+                Environment.Exit(0);
+            }
             while (true)
             {
                 try
@@ -192,7 +311,7 @@ namespace web_log_dot_net
         private void Process(HttpListenerContext context)
         {
             string filename = context.Request.Url.AbsolutePath;
-            Console.WriteLine(filename);
+            //Console.WriteLine(filename);
             filename = filename.Substring(1);
 
             if (string.IsNullOrEmpty(filename))
