@@ -2,7 +2,7 @@
 Web Log and reports for .NET projects (background processes monitor)
 ## TODO
 ```
-* Allow user to use custom files (CSS, JS, HTML template)
+- Allow user to use custom files (CSS, JS, HTML template)
 ```
 ## How To Use
 * Add reference to DLL in your project.
