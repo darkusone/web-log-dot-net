@@ -40,6 +40,7 @@ namespace web_log_dot_net
                                         <meta http-equiv='refresh' content='%refresh%'/>
                                         <meta charset='UTF-8'/>
                                         <link rel='stylesheet' href='main.css'>
+                                        <link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css'>
                                         <link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css'>
                                         <script src='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js'></script>
                                     </head>";
@@ -53,7 +54,7 @@ namespace web_log_dot_net
                                         <!-- weblogend -->
                                         </div>
                                     </body></html>";
-        private string htmlLogLineTemplate = "<div class='row %errorLevel%'><div class='errorName'>%errorLevel%:</div> " + DateTime.Now.ToString() + " - %logMessage%</div>";
+        private string htmlLogLineTemplate = "<div class='row %errorLevel%'><i class='%icon%'></i><div class='errorName'>%errorLevel%:</div> " + DateTime.Now.ToString() + " - %logMessage%</div>";
 
 
         private string basicCSS = @"
@@ -91,6 +92,9 @@ namespace web_log_dot_net
                                         max-width: 90px;
                                         width: 90px;
                                         display: inline-flex;
+                                    }
+                                    i {
+                                        padding: 0 5px;
                                     }
                                     ";
 
@@ -139,7 +143,28 @@ namespace web_log_dot_net
 
         public void write(string message, LogLevel level = LogLevel.Info)
         {
-            string finalLine = htmlLogLineTemplate.Replace("%errorLevel%", level.ToString()).Replace("%logMessage%", message);
+            string icon;
+
+            switch (level)
+            {
+                case LogLevel.Info:
+                    icon = "fa fa-info-circle";
+                    break;
+                case LogLevel.Warning:
+                    icon = "fa fa-exclamation-triangle";
+                    break;
+                case LogLevel.Error:
+                    icon = "fa fa-exclamation-circle";
+                    break;
+                case LogLevel.Critical:
+                    icon = "fa fa-times-circle";
+                    break;
+                default:
+                    icon = "fa fa-info-circle";
+                    break;
+            }
+
+            string finalLine = htmlLogLineTemplate.Replace("%errorLevel%", level.ToString()).Replace("%logMessage%", message).Replace("%icon%", icon);
             string currentFileContent, bodyFirstPart, bodyLastPart;
 
             using(StreamReader reader = new StreamReader(htmlFilePath))
