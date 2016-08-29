@@ -73,25 +73,27 @@ namespace web_log_dot_net
                                         padding: 5px 10px;
                                         font-size: 14px;
                                         border: 1px solid #999;
+                                        border-top: none;
                                         font-weight: bold;
                                     }
                                     .info {
-                                        background-color: #7986CB;
+                                        background-color: #dff0d8;
                                     }
                                     .warning {
-                                        background-color: #FFD54F;
+                                        background-color: #fcf8e3;
                                     }
                                     .error {
-                                        background-color: #E57373;
+                                        background-color: #f2dede;
                                     }
                                     .critical {
-                                        background-color: #B71C1C;
+                                        background-color: #a73232;
                                     }
                                     .errorName {
                                         min-width: 90px;
                                         max-width: 90px;
                                         width: 90px;
                                         display: inline-flex;
+                                        padding-left: 5px;
                                     }
                                     i {
                                         padding: 0 5px;

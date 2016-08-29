@@ -6,6 +6,7 @@ Web Log and reports for .NET projects (background processes monitor)
 - Clear temp folder after process finish
 - Maybe allow user to make public while working with some api like https://ngrok.com/ ?????
 - DONE -> Maybe add header icons for each log row, if yes add awesomefont CDN
+- Allow user keep logFiles or delete all after process done
 ```
 ## How To Use
 * Add reference to DLL in your project.
