@@ -141,7 +141,7 @@ namespace web_log_dot_net
             Directory.Delete(htmlTempFolder, true);
         }
 
-        public void write(string message, LogLevel level = LogLevel.Info)
+        public void write(string message, LogLevel level = LogLevel.Info, bool stopProcess = false)
         {
             string icon;
 
@@ -178,6 +178,10 @@ namespace web_log_dot_net
             using(StreamWriter writer = new StreamWriter(htmlFilePath))
             {
                 writer.Write(bodyFirstPart + finalLine + bodyLastPart);
+            }
+            if (stopProcess)
+            {
+                Environment.Exit(0);
             }
 
         }
